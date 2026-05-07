@@ -1,0 +1,206 @@
+
+main {
+	text-align: center;
+}
+#seats {
+	width: 530px;
+	display: flex;
+	flex-wrap: wrap;
+	row-gap: 15px;
+	column-gap: 10px;
+	margin: 0 auto;
+}
+.seat {
+    position: relative;
+    padding: 0;
+    width: 80px;
+    height: 40px;
+	overflow: hidden;
+    font-weight: 1000;
+}
+		
+.seat.notAvailable::before,
+.seat.notAvailable::after {
+    content: "";
+    position: absolute;
+		
+    width: 100px;
+    height: 4px;
+    background: gray;
+		
+    top: 50%;
+    left: 50%;
+		
+    transform-origin: center;
+    pointer-events: none;
+}
+		
+/* 左上 → 右下 */
+.seat.notAvailable::before {
+    transform: translate(-50%, -50%) rotate(27deg);
+}
+		
+/* 右上 → 左下 */
+.seat.notAvailable::after {
+    transform: translate(-50%, -50%) rotate(-27deg);
+}
+
+.seat.boy {
+    background-color: rgb(153, 153, 216);
+    color: rgb(63, 63, 192);
+}
+.seat.girl {
+    background-color: rgb(221, 133, 133);
+    color: rgb(199, 49, 49);
+}
+
+#shuffle,
+#stop {
+    display: block;
+    margin: 20px auto;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 10px;
+    scale: 1;
+    transition: all 0.3s;
+}
+#shuffle {
+    background-color: rgb(247, 222, 222);
+    border: red 1px solid;
+}
+#stop {
+    display: none;
+    background-color: rgb(222, 229, 247);
+    border: blue 1px solid;
+}
+#shuffle:hover {
+    background-color: rgb(209, 130, 130);
+    scale: 1.05;
+}
+#stop:hover {
+    background-color: rgb(131, 130, 209);
+    scale: 1.05;
+}
+
+.toggle-button-1 {
+    display: inline-block;
+    margin-top: 20px;
+    position: relative;
+    width: 50px;
+    height: 25px;
+    border-radius: 25px;
+    background-color: #dddddd;
+    
+    cursor: pointer;
+    transition: background-color .4s;
+}
+
+.toggle-button-1:has(:checked) {
+    background-color: #4bd865;
+}
+
+.toggle-button-1::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgb(0 0 0 / 20%);
+    background-color: #fff;
+    content: '';
+    transition: left .4s;
+}
+
+.toggle-button-1:has(:checked)::after {
+    left: 25px;
+}
+
+.toggle-button-1 input {
+    display: none;
+}
+
+h3 {
+    margin-top: 10px;
+}
+
+.forMobile {
+    display: none;
+}
+
+    .box {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      width: 320px;
+      margin: 50px auto;
+      border: black 1px solid;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .box input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      height: 120px;
+    }
+
+    .box button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #4285f4;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .box button:hover {
+      background: #2f6fe0;
+    }
+
+    #message {
+
+      margin-top: 12px;
+      display: none;
+    }
+
+
+@media (max-width: 1000px) {
+    .forMobile {
+        display: block;
+    }
+    
+    #seats {
+        width: 350px;
+        display: flex;
+        flex-wrap: wrap;
+        row-gap: 15px;
+        column-gap: 10px;
+        margin: 0 auto;
+    }
+    .seat {
+        width: 50px;
+        height: 25px;
+    }
+            
+    .seat.notAvailable::before,
+    .seat.notAvailable::after {
+        width: 60px;
+    }
+}
