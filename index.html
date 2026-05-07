@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>席替えプロトタイプ</title>
+	 <style>
+	 main {
+			text-align: center;
+	 }
+	 #seats {
+			width: 530px;
+	 		display: flex;
+			flex-wrap: wrap;
+			row-gap: 15px;
+			column-gap: 10px;
+			margin: 0 auto;
+	 }
+	 .seat {
+		    position: relative;
+		    width: 80px;
+		    height: 40px;
+			 overflow: hidden;
+		}
+		
+		.seat.notAvailable::before,
+		.seat.notAvailable::after {
+		    content: "";
+		    position: absolute;
+		
+		    width: 100px;
+		    height: 4px;
+		    background: gray;
+		
+		    top: 50%;
+		    left: 50%;
+		
+		    transform-origin: center;
+		    pointer-events: none;
+		}
+		
+		/* 左上 → 右下 */
+		.seat.notAvailable::before {
+		    transform: translate(-50%, -50%) rotate(27deg);
+		}
+		
+		/* 右上 → 左下 */
+		.seat.notAvailable::after {
+		    transform: translate(-50%, -50%) rotate(-27deg);
+		}
+	 
+	 
+	 </style>
+</head>
+<body>
+    <main>
+	 		<h1>席替えシステム</h1>
+			<div id="seats">
+			</div>
+
+			<button id="shuffle">シャッフルする</button>
+    </main>
+	 <script>
+	 const seats = document.getElementById("seats");
+	 const shuffleBtn = document.getElementById("shuffle");
+	 let n = 42;
+	 let seatsAvailable = [];
+	 const boys = [1,2,4,5,6,7,8,9,10,11,12,13,15,19,20,21,22,24,29,30,31,32,33,37,38,39,41];
+	 const girls = [3,14,16,17,18,23,25,26,27,28,34,35,36,40];
+	 const absent = [31];
+	 const scenes = {
+	 		prepare: 0,
+			shuffling: 1,
+			finish: 2
+	 };
+	 let scene = scenes.prepare;
+
+	 for(let i = 0; i < 42; i++) {
+	 		seatsAvailable.push(true);
+	 		const seat = document.createElement('button');
+			seat.className = "seat";
+			seat.addEventListener('click', () => {
+					const id = i;
+					if (seatsAvailable[id]) {
+							seat.classList.add("notAvailable");
+							seatsAvailable[id] = false;
+							n--;
+					} else {
+							seat.classList.remove("notAvailable");
+							seatsAvailable[id] = true;
+							n++;
+					}
+			});
+			if (i == 4 || i == 5) {
+					seatsAvailable[i] = false;
+					seat.classList.add("notAvailable");
+					n--;
+			}
+
+			seats.appendChild(seat);
+	 }
+
+	 shuffleBtn.addEventListener('click', () => {
+			
+	 });
+
+	 
+	 
+    </script>
+</body>
+</html>
