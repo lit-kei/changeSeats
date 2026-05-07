@@ -16,6 +16,8 @@ main {
 	margin: 0 auto;
 }
 .seat {
+    border-radius: 0;
+    border: black 1px solid;
     position: relative;
     padding: 0;
     width: 80px;
