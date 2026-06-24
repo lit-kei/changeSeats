@@ -189,6 +189,57 @@ h3 {
     }
 
 
+.modal {
+  position: fixed;
+  display: none;
+  z-index: 999;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 20px;
+  width: 700px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+#back {
+  position: absolute;
+  width: 50px;
+  aspect-ratio: 1;
+  top: 0px;
+  right: 0px;
+  border-top-right-radius: 8px;
+  font-size: 30px;
+  color: #777;
+  cursor: pointer;
+  background-color: white;
+  border: none;
+  outline: none;
+  transition: all 0.5s ease;
+}
+#back:hover {
+  color: white;
+  background-color: red;
+}
+
+.seat-data {
+    width: 700px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.seat-input {
+    width: 80px;
+}
 @media (max-width: 1000px) {
     .forMobile {
         display: block;

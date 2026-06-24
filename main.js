@@ -34,6 +34,8 @@ const seats = document.getElementById("seats");
 const shuffleBtn = document.getElementById("shuffle");
 const stopBtn = document.getElementById('stop');
 const animationT = document.getElementById('animation');
+const modal = document.getElementById("modal");
+const seatsData = document.getElementById("seatsData");
 let n = 42;
 
 let seatsAvailable = [];
@@ -41,7 +43,9 @@ const boys = [1,2,4,5,6,7,8,9,10,11,12,13,15,19,20,21,22,24,29,30,31,32,33,37,38
 const girls = [3,14,16,17,18,23,25,26,27,28,34,35,36,40];
 const absent = [31];
 const secret = "beitosei";
-const password = "(._.)"
+const password = "(._.)";
+let isFixed = false;
+let fixed = {};
 let input = "";
 const scenes = {
 	prepare: 0,
@@ -54,19 +58,26 @@ let flags = [];
 for(let i = 0; i < 42; i++) {
     flags.push(false);
 	seatsAvailable.push(true);
+    const seatInput = document.createElement('input');
 	const seat = document.createElement('button');
 	seat.className = "seat";
     seat.id = `seat-${i}`;
 	seat.addEventListener('click', () => {
+            if (isFixed) {
+                alert("変更できません。");
+                return;
+            }
 			const id = i;
             seat.textContent = "";
             seat.classList.remove("boy","girl");
 			if (seatsAvailable[id]) {
 				seat.classList.add("notAvailable");
+                seatInput.style.visibility = 'hidden';
 				seatsAvailable[id] = false;
 				n--;
 			} else {
 				seat.classList.remove("notAvailable");
+                seatInput.style.visibility = 'visible';
 				seatsAvailable[id] = true;
 				n++;
 			}
@@ -74,21 +85,52 @@ for(let i = 0; i < 42; i++) {
 	if (i == 4 || i == 5) {
 		seatsAvailable[i] = false;
 		seat.classList.add("notAvailable");
+        seatInput.style.visibility = 'hidden';
 		n--;
 	}
 
 	seats.appendChild(seat);
+
+    seatInput.className = "seat-input";
+    seatInput.id = `seat-input-${i}`;
+    seatsData.appendChild(seatInput);
 }
 
-function shuffle(array) {
-    for (let i = n - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+function shuffle(array, cheating) {
+    const copied = [...array];
+    if (cheating) {
+        const newArray = [...copied];
+        let tmp = [];
+        let count = 0;
 
-        // 要素を交換
-        [array[i], array[j]] = [array[j], array[i]];
+        for (const [key, value] of Object.entries(fixed)) {
+            const i = copied.findIndex(e => e == value);
+            if (i != -1) {
+                copied[key] = value;
+                tmp.push(Number(key));
+                newArray.splice(i, 1);
+            }
+        }
+        const shuffledArray = shuffle(newArray, false);
+
+        for (let i = 0; i < n; i++) {
+            if (tmp.includes(i)) {
+                count++;
+                continue;
+            }
+            copied[i] = shuffledArray[i-count];
+        }
+
+    } else {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+
+            // 要素を交換
+            [copied[i], copied[j]] = [copied[j], copied[i]];
+        }
     }
 
-    return array;
+    return copied;
 }
 function setSeats(array) {
     
@@ -124,7 +166,7 @@ shuffleBtn.addEventListener('click', async () => {
         }
         originalArray.push(i+plus);
     }
-    const shuffledArray = shuffle(originalArray);
+    const shuffledArray = shuffle(originalArray, fixed);
     if (animationT.checked == false) {
         setSeats(shuffledArray);
     } else {
@@ -226,8 +268,27 @@ window.addEventListener("keydown", (e) => {
 		console.log("modal");
 		const a = prompt("passward: ");
 		if (a == password) {
-			console.log("success");
+            modal.style.display = "flex";
+            isFixed = true;
 		}
 		input = "";
 	}
+});
+
+document.getElementById("fin-btn").addEventListener('click', () => {
+    for (let i = 0; i < 42; i++) {
+        const e = document.getElementById(`seat-input-${i}`);
+        if (e.style.visibility == 'hidden') continue;
+        if (/^\d+$/.test(e.value)) {
+            const n = Number(e.value);
+            const p = prompt(`出席番号${n}番さんのパスワード:`);
+            if (false) {
+                fixed[i] = n;
+            }
+        }
+    }
+
+
+
+    modal.style.display = 'none';
 });
