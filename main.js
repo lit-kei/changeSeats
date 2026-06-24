@@ -40,6 +40,9 @@ let seatsAvailable = [];
 const boys = [1,2,4,5,6,7,8,9,10,11,12,13,15,19,20,21,22,24,29,30,31,32,33,37,38,39,41];
 const girls = [3,14,16,17,18,23,25,26,27,28,34,35,36,40];
 const absent = [31];
+const secret = "beitosei";
+const password = "(._.)"
+let input = "";
 const scenes = {
 	prepare: 0,
 	shuffling: 1,
@@ -209,3 +212,22 @@ stopBtn.addEventListener('click', () => {
         alert("送信に失敗しました");
       }
     };
+
+
+window.addEventListener("keydown", (e) => {
+	const l = input.length;
+	if (secret[l] == e.key) {
+		input += e.key;
+	} else {
+		input = "";
+	}
+	console.log(input);
+	if (secret == input) {
+		console.log("modal");
+		const a = prompt("passward: ");
+		if (a == password) {
+			console.log("success");
+		}
+		input = "";
+	}
+});
