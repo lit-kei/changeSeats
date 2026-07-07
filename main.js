@@ -7,6 +7,7 @@ import {
       addDoc,
       getDoc,
       doc,
+      getDocs,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
   // TODO: Add SDKs for Firebase products that you want to use
@@ -41,6 +42,7 @@ const pass = document.getElementById("password");
 const meta = document.getElementById("meta");
 const spinner = document.getElementById("spinner");
 const seatsData = document.getElementById("seatsData");
+const problem = document.getElementById("problem");
 let n = 42;
 
 let seatsAvailable = [];
@@ -61,10 +63,6 @@ const scenes = {
 let scene = scenes.prepare;
 let flags = [];
 
-await getDoc(doc(db, "password", secretDoc)).then(doc => {
-    secret = doc.data().secret;
-    console.log(secret);
-});
 
 for(let i = 0; i < 42; i++) {
     flags.push(false);
@@ -157,6 +155,22 @@ function getRandomly(array) {
     const i = Math.floor(Math.random()*n);
     return array[i];
 }
+await getDocs(collection(db, "password")).then(docs => {
+    docs.forEach(doc => {
+        switch (doc.id) {
+            case secretDoc:
+                secret = doc.data().secret;
+                break;
+            case "problem":
+                problem.innerHTML = doc.data().text;
+                break
+            default:
+                break;
+        }
+    });
+    MathJax.typeset();
+});
+
 shuffleBtn.addEventListener('click', async () => {
     if (scene == scenes.shuffling) return;
     for (let i = 0; i < 42; i++) {
