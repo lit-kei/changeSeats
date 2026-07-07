@@ -282,7 +282,7 @@ document.getElementById("fin-btn").addEventListener('click', () => {
         if (/^\d+$/.test(e.value)) {
             const n = Number(e.value);
             const p = prompt(`出席番号${n}番さんのパスワード:`);
-            if (false) {
+            if (true) {
                 fixed[i] = n;
             }
         }
