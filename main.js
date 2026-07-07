@@ -47,7 +47,8 @@ let seatsAvailable = [];
 const boys = [1,2,4,5,6,7,8,9,10,11,12,13,15,19,20,21,22,24,29,30,31,32,33,37,38,39,41];
 const girls = [3,14,16,17,18,23,25,26,27,28,34,35,36,40];
 const absent = [31];
-const secret = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+let secret = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+let secretDoc = "wjR9ji1aSo829O9ytMU4";
 const password = "ao6SizD9U3klF9BLgnrN";
 let isFixed = false;
 let fixed = {};
@@ -59,6 +60,11 @@ const scenes = {
 };
 let scene = scenes.prepare;
 let flags = [];
+
+await getDoc(doc(db, "password", secretDoc)).then(doc => {
+    secret = doc.data().secret;
+    console.log(secret);
+});
 
 for(let i = 0; i < 42; i++) {
     flags.push(false);
