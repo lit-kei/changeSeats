@@ -5,6 +5,8 @@ import {
       getFirestore,
       collection,
       addDoc,
+      getDoc,
+      doc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
   // TODO: Add SDKs for Firebase products that you want to use
@@ -35,6 +37,9 @@ const shuffleBtn = document.getElementById("shuffle");
 const stopBtn = document.getElementById('stop');
 const animationT = document.getElementById('animation');
 const modal = document.getElementById("modal");
+const pass = document.getElementById("password");
+const meta = document.getElementById("meta");
+const spinner = document.getElementById("spinner");
 const seatsData = document.getElementById("seatsData");
 let n = 42;
 
@@ -42,11 +47,11 @@ let seatsAvailable = [];
 const boys = [1,2,4,5,6,7,8,9,10,11,12,13,15,19,20,21,22,24,29,30,31,32,33,37,38,39,41];
 const girls = [3,14,16,17,18,23,25,26,27,28,34,35,36,40];
 const absent = [31];
-const secret = "beitosei";
-const password = "(._.)";
+const secret = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+const password = "ao6SizD9U3klF9BLgnrN";
 let isFixed = false;
 let fixed = {};
-let input = "";
+let input = 0;
 const scenes = {
 	prepare: 0,
 	shuffling: 1,
@@ -95,42 +100,39 @@ for(let i = 0; i < 42; i++) {
     seatInput.id = `seat-input-${i}`;
     seatsData.appendChild(seatInput);
 }
+function shuffle(array) {
 
-function shuffle(array, cheating) {
-    const copied = [...array];
-    if (cheating) {
-        const newArray = [...copied];
-        let tmp = [];
-        let count = 0;
+    // 固定する生徒を除く
+    const freeStudents = array.filter(x => !Object.values(fixed).includes(x));
 
-        for (const [key, value] of Object.entries(fixed)) {
-            const i = copied.findIndex(e => e == value);
-            if (i != -1) {
-                copied[key] = value;
-                tmp.push(Number(key));
-                newArray.splice(i, 1);
-            }
-        }
-        const shuffledArray = shuffle(newArray, false);
+    // シャッフル
+    for (let i = freeStudents.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [freeStudents[i], freeStudents[j]] = [freeStudents[j], freeStudents[i]];
+    }
 
-        for (let i = 0; i < n; i++) {
-            if (tmp.includes(i)) {
-                count++;
-                continue;
-            }
-            copied[i] = shuffledArray[i-count];
-        }
+    // 結果配列
+    const result = Array(n);
 
-    } else {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-
-            // 要素を交換
-            [copied[i], copied[j]] = [copied[j], copied[i]];
+    // 固定席以外の座席
+    const freeSeats = [];
+    for (let i = 0; i < n; i++) {
+        if (!(i in fixed)) {
+            freeSeats.push(i);
         }
     }
 
-    return copied;
+    // 固定席を配置
+    for (const [seat, student] of Object.entries(fixed)) {
+        result[Number(seat)] = student;
+    }
+
+    // 残りを配置
+    freeSeats.forEach((seat, i) => {
+        result[seat] = freeStudents[i];
+    });
+
+    return result;
 }
 function setSeats(array) {
     
@@ -166,7 +168,7 @@ shuffleBtn.addEventListener('click', async () => {
         }
         originalArray.push(i+plus);
     }
-    const shuffledArray = shuffle(originalArray, fixed);
+    const shuffledArray = shuffle(originalArray);
     if (animationT.checked == false) {
         setSeats(shuffledArray);
     } else {
@@ -257,31 +259,48 @@ stopBtn.addEventListener('click', () => {
 
 
 window.addEventListener("keydown", (e) => {
-	const l = input.length;
-	if (secret[l] == e.key) {
-		input += e.key;
+	if (secret[input] == e.key) {
+		input++;
 	} else {
-		input = "";
+		input = 0;
 	}
 	console.log(input);
-	if (secret == input) {
+	if (secret.length == input) {
 		console.log("modal");
-		const a = prompt("passward: ");
-		if (a == password) {
-            modal.style.display = "flex";
-            isFixed = true;
-		}
-		input = "";
+        modal.style.display = "flex";
+        pass.style.display = "block";
+        meta.style.display = "none";
+		input = 0;
 	}
+});
+
+document.getElementById("submit-btn").addEventListener('click', async () =>  {
+    const e = document.getElementById("input").value;
+    pass.style.visibility = "hidden";
+    spinner.style.display = "block";
+
+    await new Promise(requestAnimationFrame);
+    
+    await getDoc(doc(db, "password", password))
+        .then(doc => {
+            if (doc.data().password == e) {
+                meta.style.display = "block";
+                pass.style.display = "none";
+                isFixed = true;
+
+            }
+            spinner.style.display = "none";
+            pass.style.visibility = "visible";
+        });
 });
 
 document.getElementById("fin-btn").addEventListener('click', () => {
     for (let i = 0; i < 42; i++) {
+        delete fixed[i];
         const e = document.getElementById(`seat-input-${i}`);
         if (e.style.visibility == 'hidden') continue;
         if (/^\d+$/.test(e.value)) {
             const n = Number(e.value);
-            const p = prompt(`出席番号${n}番さんのパスワード:`);
             if (true) {
                 fixed[i] = n;
             }

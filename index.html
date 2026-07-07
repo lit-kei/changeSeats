@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>席替えプロトタイプ</title>
 	<link rel="stylesheet" href="style.css">
+	<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$']],
+            displayMath: [["$$", "$$"]]
+        },
+        options: {
+            enableMenu: false
+        }
+    };
+    </script>
+    <script id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
     <main>
@@ -41,12 +54,26 @@
 	
         <div id="modal" class="modal">
             <div class="modal-content">
-                <button type="button" id="back" onclick="document.getElementById('modal').style.display = 'none';">&times;</button>
-                <p id="label">席替えデータ</p>
-				<div id="seatsData" class="seat-data">
-
+				<div class="spinner" id="spinner"></div>
+				<div id="password">
+					<button type="button" class="back" onclick="document.getElementById('modal').style.display = 'none';">&times;</button>
+					<h2>パスワード</h2>
+					<p>集合 $S$ を次のように定める． $$ S = \lbrace 1,2,3, \dots, 10 \rbrace $$</p>
+					<p>このとき，$2^{10}$ 個ある $S$ の部分集合のうち，その集合の <strong>要素の総積$^{[1]}$</strong>が<br> $3$ の倍数になるようなものはいくつありますか？</p>
+					<p>$[1]$： 総積とは与えられた数字全てを掛け合わせたものです．<br>ただし，空集合の総積は $1$ とします．</p>
+					<input type="number" id="input" autocomplete="off">
+					<button type="button" id="submit-btn" style="display: block; margin: 0 auto;">確定</button>
 				</div>
-				<button id="fin-btn" style="margin-top: 10px;">Done!</button>
+
+				<div id="meta">
+					
+					<button type="button" class="back" onclick="document.getElementById('modal').style.display = 'none';">&times;</button>
+					<p id="label">席替えデータ</p>
+					<div id="seatsData" class="seat-data">
+					</div>
+					<button id="fin-btn" style="margin-top: 10px;">Done!</button>
+					
+				</div>
             </div>
         </div>
 	 <script src="main.js" type="module"></script>
