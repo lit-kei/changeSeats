@@ -43,6 +43,7 @@ const meta = document.getElementById("meta");
 const spinner = document.getElementById("spinner");
 const seatsData = document.getElementById("seatsData");
 const problem = document.getElementById("problem");
+const passInput = document.getElementById("input");
 let n = 42;
 
 let seatsAvailable = [];
@@ -100,6 +101,7 @@ for(let i = 0; i < 42; i++) {
 
 	seats.appendChild(seat);
 
+    seatInput.autocomplete = "off";
     seatInput.className = "seat-input";
     seatInput.id = `seat-input-${i}`;
     seatsData.appendChild(seatInput);
@@ -155,14 +157,18 @@ function getRandomly(array) {
     const i = Math.floor(Math.random()*n);
     return array[i];
 }
+
+let id = "";
 await getDocs(collection(db, "password")).then(docs => {
     docs.forEach(doc => {
         switch (doc.id) {
             case secretDoc:
                 secret = doc.data().secret;
                 break;
-            case "problem":
-                problem.innerHTML = doc.data().text;
+            case "problemid":
+                id = doc.data().id;
+                const problemDoc = docs.docs.filter(e => e.id == id)[0];
+                problem.innerHTML = problemDoc.data().text;
                 break
             default:
                 break;
@@ -293,29 +299,35 @@ window.addEventListener("keydown", (e) => {
 		input = 0;
 	}
 });
+document.getElementById("myForm").addEventListener("submit", async (event) => {
+    event.preventDefault(); // ページ遷移を防ぐ
 
-document.getElementById("submit-btn").addEventListener('click', async () =>  {
-    const e = document.getElementById("input").value;
+    const e = passInput.value;
     pass.style.visibility = "hidden";
     spinner.style.display = "block";
 
     await new Promise(requestAnimationFrame);
     
-    await getDoc(doc(db, "password", password))
+    await getDoc(doc(db, "password", id))
         .then(doc => {
-            if (doc.data().password == e) {
+            if (doc.data().ans == e) {
                 meta.style.display = "block";
                 pass.style.display = "none";
                 isFixed = true;
+                spinner.style.display = "none";
+                pass.style.visibility = "visible";
 
+            } else {
+                spinner.style.display = "none";
+                pass.style.visibility = "visible";
+                passInput.focus();
             }
-            spinner.style.display = "none";
-            pass.style.visibility = "visible";
         });
 });
 
 document.getElementById("fin-btn").addEventListener('click', () => {
     let empty = 0;
+    let currentFixed = [];
     for (let i = 0; i < 42; i++) {
         delete fixed[i];
         const e = document.getElementById(`seat-input-${i}`);
@@ -325,8 +337,15 @@ document.getElementById("fin-btn").addEventListener('click', () => {
         }
         if (/^\d+$/.test(e.value)) {
             const n = Number(e.value);
-            if (true) {
-                fixed[i - empty] = n;
+            if (n >= 0 && n <= 41) {
+                if (!currentFixed.includes(n)) {
+                    currentFixed.push(n);
+                    fixed[i - empty] = n;
+                } else {
+                    // すでに固定されている
+                }
+            } else { 
+                // 番号がおかしい
             }
         }
     }
