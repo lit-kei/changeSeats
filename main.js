@@ -315,14 +315,18 @@ document.getElementById("submit-btn").addEventListener('click', async () =>  {
 });
 
 document.getElementById("fin-btn").addEventListener('click', () => {
+    let empty = 0;
     for (let i = 0; i < 42; i++) {
         delete fixed[i];
         const e = document.getElementById(`seat-input-${i}`);
-        if (e.style.visibility == 'hidden') continue;
+        if (e.style.visibility == 'hidden') {
+            empty++;
+            continue;
+        }
         if (/^\d+$/.test(e.value)) {
             const n = Number(e.value);
             if (true) {
-                fixed[i] = n;
+                fixed[i - empty] = n;
             }
         }
     }
