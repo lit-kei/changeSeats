@@ -65,6 +65,7 @@ let scene = scenes.prepare;
 let flags = [];
 
 
+
 for(let i = 0; i < 42; i++) {
     flags.push(false);
 	seatsAvailable.push(true);
@@ -233,6 +234,14 @@ shuffleBtn.addEventListener('click', async () => {
     scene = scenes.finish;
 });
 
+function export() {
+    let S = [];
+    for (let i = 0; i < 42; i++) {
+        const e = document.getElementById(`seat-${i}`).textContent;
+        S.push((e == "" ? -1 : Number(e)));
+    }
+    console.log(S);
+}
 
 
 animationT.addEventListener('change', () => {
