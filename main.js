@@ -234,7 +234,7 @@ shuffleBtn.addEventListener('click', async () => {
     scene = scenes.finish;
 });
 
-function export() {
+function getSeats() {
     let S = [];
     for (let i = 0; i < 42; i++) {
         const e = document.getElementById(`seat-${i}`).textContent;
@@ -263,6 +263,8 @@ stopBtn.addEventListener('click', () => {
     }
     stopBtn.style.display = 'none';
 });
+
+window.getSeats = getSeats;
 
  window.send = async function () {
       const name = document.getElementById("name").value;
