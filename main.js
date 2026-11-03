@@ -238,11 +238,23 @@ function getSeats() {
     let S = [];
     for (let i = 0; i < 42; i++) {
         const e = document.getElementById(`seat-${i}`).textContent;
-        S.push((e == "" ? -1 : Number(e)));
+        S.push(e === "" ? -1 : Number(e));
     }
-    console.log(S);
+    return S;
 }
+window.addEventListener("keydown", async (e) => {
+    if (e.ctrlKey && e.altKey && e.code === "KeyC") {
+        e.preventDefault();
 
+        const seats = getSeats();
+        try {
+            await navigator.clipboard.writeText(JSON.stringify(seats));
+            console.log("席順をコピーしました！");
+        } catch (error) {
+            console.error("コピーに失敗しました:", error);
+        }
+    }
+});
 
 animationT.addEventListener('change', () => {
     if (scene == scenes.shuffling) {
@@ -264,7 +276,6 @@ stopBtn.addEventListener('click', () => {
     stopBtn.style.display = 'none';
 });
 
-window.getSeats = getSeats;
 
  window.send = async function () {
       const name = document.getElementById("name").value;
