@@ -288,3 +288,13 @@ h3 {
         width: 60px;
     }
 }
+
+/* 男女の座席指定 */
+.gender-modal-content { width: min(700px, 94vw); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+.gender-seats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; width: min(100%, 530px); margin: 16px auto; }
+.gender-seat { height: 40px; min-width: 0; border: 1px solid #888; border-radius: 5px; background: white; font-weight: bold; cursor: pointer; }
+.gender-seat.boy { background: #9999d8; color: #252575; }
+.gender-seat.girl { background: #dd8585; color: #752020; }
+.gender-seat:disabled { background: #eee; color: #888; cursor: not-allowed; }
+#gender-error { color: #a22; min-height: 1em; }
+#gender-reset, #gender-save { margin: 6px; padding: 10px 15px; cursor: pointer; }

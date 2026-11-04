@@ -82,6 +82,17 @@
 				</div>
             </div>
         </div>
+        <div id="gender-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="gender-title">
+            <div class="modal-content gender-modal-content">
+                <button type="button" class="back" id="gender-close" aria-label="閉じる">&times;</button>
+                <h2 id="gender-title">男女の座席指定</h2>
+                <p>席をクリックして「指定なし → 男子 → 女子」を切り替えます。</p>
+                <div id="gender-seats" class="gender-seats"></div>
+                <p id="gender-error" role="alert"></p>
+                <button type="button" id="gender-reset">指定をすべて解除</button>
+                <button type="button" id="gender-save">保存して閉じる</button>
+            </div>
+        </div>
 	 <script src="main.js" type="module"></script>
 </body>
 </html>

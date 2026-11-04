@@ -52,6 +52,10 @@ const girls = [3,14,16,17,18,23,25,26,27,28,34,35,36,40];
 const absent = [31];
 let secret = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
 let secretDoc = "wjR9ji1aSo829O9ytMU4";
+const genderSecretDoc = "7rdGOakTclBrP5GGeAgQ";
+let genderSecret = [];
+let genderInput = 0;
+const genderRules = Array(42).fill(null);
 const password = "ao6SizD9U3klF9BLgnrN";
 let isFixed = false;
 let fixed = {};
@@ -107,38 +111,51 @@ for(let i = 0; i < 42; i++) {
     seatInput.id = `seat-input-${i}`;
     seatsData.appendChild(seatInput);
 }
-function shuffle(array) {
-
-    // 固定する生徒を除く
-    const freeStudents = array.filter(x => !Object.values(fixed).includes(x));
-
-    // シャッフル
-    for (let i = freeStudents.length - 1; i > 0; i--) {
+function shuffleList(array) {
+    for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [freeStudents[i], freeStudents[j]] = [freeStudents[j], freeStudents[i]];
+        [array[i], array[j]] = [array[j], array[i]];
     }
-
-    // 結果配列
-    const result = Array(n);
-
-    // 固定席以外の座席
-    const freeSeats = [];
-    for (let i = 0; i < n; i++) {
-        if (!(i in fixed)) {
-            freeSeats.push(i);
+    return array;
+}
+function genderOf(student) {
+    return boys.includes(student) ? "boy" : girls.includes(student) ? "girl" : null;
+}
+function shuffle(array) {
+    const activeSeats = seatsAvailable.flatMap((ok, i) => ok ? [i] : []);
+    const result = Array(activeSeats.length);
+    const fixedStudents = new Set(Object.values(fixed));
+    if (fixedStudents.size !== Object.keys(fixed).length || array.length !== activeSeats.length) {
+        throw new Error("生徒数・固定席・使用可能な座席数を確認してください。");
+    }
+    const freeStudents = array.filter(x => !fixedStudents.has(x));
+    const pools = {
+        boy: shuffleList(freeStudents.filter(x => genderOf(x) === "boy")),
+        girl: shuffleList(freeStudents.filter(x => genderOf(x) === "girl"))
+    };
+    if (pools.boy.length + pools.girl.length !== freeStudents.length) {
+        throw new Error("生徒の男女情報を確認してください。");
+    }
+    const openSeats = [];
+    for (let i = 0; i < activeSeats.length; i++) {
+        const rule = genderRules[activeSeats[i]];
+        if (Object.hasOwn(fixed, i)) {
+            const student = fixed[i];
+            if (!array.includes(student) || (rule && genderOf(student) !== rule)) {
+                throw new Error("固定席と男女指定に矛盾があります。");
+            }
+            result[i] = student;
+        } else if (rule) {
+            if (!pools[rule].length) {
+                throw new Error("男女指定の座席数が該当する生徒数を超えています。");
+            }
+            result[i] = pools[rule].pop();
+        } else {
+            openSeats.push(i);
         }
     }
-
-    // 固定席を配置
-    for (const [seat, student] of Object.entries(fixed)) {
-        result[Number(seat)] = student;
-    }
-
-    // 残りを配置
-    freeSeats.forEach((seat, i) => {
-        result[seat] = freeStudents[i];
-    });
-
+    const remaining = shuffleList([...pools.boy, ...pools.girl]);
+    openSeats.forEach((i, k) => result[i] = remaining[k]);
     return result;
 }
 function setSeats(array) {
@@ -177,6 +194,16 @@ await getDocs(collection(db, "password")).then(docs => {
     });
     MathJax.typeset();
 });
+try {
+    const genderDoc = await getDoc(doc(db, "password", genderSecretDoc));
+    if (genderDoc.exists() && Array.isArray(genderDoc.data().secret)) {
+        genderSecret = genderDoc.data().secret;
+    } else {
+        console.warn("男女指定用のsecret配列がありません。");
+    }
+} catch (error) {
+    console.error("男女指定の起動キーを取得できませんでした:", error);
+}
 
 shuffleBtn.addEventListener('click', async () => {
     if (scene == scenes.shuffling) return;
@@ -195,7 +222,14 @@ shuffleBtn.addEventListener('click', async () => {
         }
         originalArray.push(i+plus);
     }
-    const shuffledArray = shuffle(originalArray);
+    let shuffledArray;
+    try {
+        shuffledArray = shuffle(originalArray);
+    } catch (error) {
+        scene = scenes.finish;
+        alert(error.message);
+        return;
+    }
     if (animationT.checked == false) {
         setSeats(shuffledArray);
     } else {
@@ -307,6 +341,16 @@ stopBtn.addEventListener('click', () => {
 
 
 window.addEventListener("keydown", (e) => {
+    if (e.target instanceof HTMLElement && (e.target.matches("input, textarea, select") || e.target.isContentEditable)) return;
+    if (genderSecret.length) {
+        genderInput = genderSecret[genderInput] === e.key ? genderInput + 1 : (genderSecret[0] === e.key ? 1 : 0);
+        if (genderInput === genderSecret.length) {
+            genderInput = 0;
+            input = 0;
+            openGenderModal();
+            return;
+        }
+    }
 	if (secret[input] == e.key) {
 		input++;
 	} else {
@@ -375,4 +419,62 @@ document.getElementById("fin-btn").addEventListener('click', () => {
 
 
     modal.style.display = 'none';
+});
+const genderModal = document.getElementById("gender-modal");
+const genderSeats = document.getElementById("gender-seats");
+const genderError = document.getElementById("gender-error");
+const genderChoices = [null, "boy", "girl"];
+const genderButtons = [];
+
+function renderGenderSeats() {
+    genderButtons.forEach((button, i) => {
+        const rule = genderRules[i];
+        button.disabled = !seatsAvailable[i];
+        button.className = "gender-seat" + (rule ? " " + rule : "");
+        button.textContent = !seatsAvailable[i] ? "×" : rule === "boy" ? "男" : rule === "girl" ? "女" : "－";
+        button.setAttribute("aria-label", `座席${i + 1}：${rule === "boy" ? "男子" : rule === "girl" ? "女子" : "指定なし"}`);
+    });
+}
+function openGenderModal() {
+    renderGenderSeats();
+    genderError.textContent = "";
+    genderModal.style.display = "flex";
+}
+for (let i = 0; i < 42; i++) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.addEventListener("click", () => {
+        genderRules[i] = genderChoices[(genderChoices.indexOf(genderRules[i]) + 1) % genderChoices.length];
+        renderGenderSeats();
+    });
+    genderButtons.push(button);
+    genderSeats.appendChild(button);
+}
+document.getElementById("gender-close").addEventListener("click", () => {
+    genderModal.style.display = "none";
+});
+document.getElementById("gender-reset").addEventListener("click", () => {
+    genderRules.fill(null);
+    renderGenderSeats();
+    genderError.textContent = "";
+});
+document.getElementById("gender-save").addEventListener("click", () => {
+    const active = seatsAvailable.flatMap((ok, i) => ok ? [i] : []);
+    const pinned = new Set(Object.values(fixed));
+    const counts = { boy: 0, girl: 0 };
+    for (let i = 0; i < active.length; i++) {
+        const rule = genderRules[active[i]];
+        if (Object.hasOwn(fixed, i)) {
+            if (rule && genderOf(fixed[i]) !== rule) {
+                genderError.textContent = "固定席の生徒と男女指定が矛盾しています。";
+                return;
+            }
+        } else if (rule) counts[rule]++;
+    }
+    if (counts.boy > boys.filter(n => !absent.includes(n) && !pinned.has(n)).length ||
+        counts.girl > girls.filter(n => !absent.includes(n) && !pinned.has(n)).length) {
+        genderError.textContent = "指定する男女の座席数が、生徒数を超えています。";
+        return;
+    }
+    genderModal.style.display = "none";
 });
