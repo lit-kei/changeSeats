@@ -298,3 +298,5 @@ h3 {
 .gender-seat:disabled { background: #eee; color: #888; cursor: not-allowed; }
 #gender-error { color: #a22; min-height: 1em; }
 #gender-reset, #gender-save { margin: 6px; padding: 10px 15px; cursor: pointer; }
+
+.modal-error { color: #a22; min-height: 1.2em; margin: 10px 0 0; font-size: 14px; }
