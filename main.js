@@ -54,8 +54,9 @@ const absent = [31];
 let secret = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
 let secretDoc = "wjR9ji1aSo829O9ytMU4";
 const genderSecretDoc = "7rdGOakTclBrP5GGeAgQ";
-let genderSecret = [];
-let genderInput = 0;
+let genderSecretHash = null;
+let genderKeyBuffer = "";
+const MAX_GENDER_KEYS = 128;
 const genderRules = Array(42).fill(null);
 const password = "ao6SizD9U3klF9BLgnrN";
 let isFixed = false;
@@ -197,10 +198,11 @@ await getDocs(collection(db, "password")).then(docs => {
 });
 try {
     const genderDoc = await getDoc(doc(db, "password", genderSecretDoc));
-    if (genderDoc.exists() && Array.isArray(genderDoc.data().secret)) {
-        genderSecret = genderDoc.data().secret;
+    const hash = genderDoc.exists() ? genderDoc.data().secret : null;
+    if (typeof hash === "string" && /^[a-f0-9]{64}$/i.test(hash)) {
+        genderSecretHash = hash.toLowerCase();
     } else {
-        console.warn("男女指定用のsecret配列がありません。");
+        console.warn("男女指定用のsecretフィールドにはSHA-256の16進数64文字を設定してください。");
     }
 } catch (error) {
     console.error("男女指定の起動キーを取得できませんでした:", error);
@@ -341,16 +343,47 @@ stopBtn.addEventListener('click', () => {
     };
 
 
-window.addEventListener("keydown", (e) => {
-    if (e.target instanceof HTMLElement && (e.target.matches("input, textarea, select") || e.target.isContentEditable)) return;
-    if (genderSecret.length) {
-        genderInput = genderSecret[genderInput] === e.key ? genderInput + 1 : (genderSecret[0] === e.key ? 1 : 0);
-        if (genderInput === genderSecret.length) {
-            genderInput = 0;
-            input = 0;
-            openGenderModal();
-            return;
+// キー名をそのまま連結してハッシュ化する。例: "password" / "ArrowUpArrowDowna"
+// 入力フォーム内のキー操作・修飾キー・ショートカットは収集しない。
+async function sha256Hex(value) {
+    const bytes = new TextEncoder().encode(value);
+    const hash = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(hash), x => x.toString(16).padStart(2, "0")).join("");
+}
+
+window.addEventListener("keydown", async (e) => {
+    if (e.target instanceof HTMLElement &&
+        (e.target.closest("input, textarea, select, button, [contenteditable]") ||
+         e.target.isContentEditable)) {
+        genderKeyBuffer = "";
+        return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing || e.repeat) {
+        genderKeyBuffer = "";
+        return;
+    }
+    if (e.key === "Enter") {
+        const candidate = genderKeyBuffer;
+        genderKeyBuffer = "";
+        if (candidate && genderSecretHash) {
+            try {
+                if (await sha256Hex(candidate) === genderSecretHash) {
+                    input = 0;
+                    openGenderModal();
+                    return;
+                }
+            } catch (error) {
+                console.error("SHA-256検証に失敗しました:", error);
+            }
         }
+        return;
+    }
+    if (e.key === "Backspace") {
+        genderKeyBuffer = genderKeyBuffer.slice(0, -1);
+    } else if (e.key.length === 1 || e.key.startsWith("Arrow")) {
+        genderKeyBuffer = (genderKeyBuffer + e.key).slice(-MAX_GENDER_KEYS);
+    } else {
+        genderKeyBuffer = "";
     }
 	if (secret[input] == e.key) {
 		input++;
