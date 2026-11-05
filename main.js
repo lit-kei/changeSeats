@@ -398,48 +398,75 @@ document.getElementById("myForm").addEventListener("submit", async (event) => {
         });
 });
 
-document.getElementById("fin-btn").addEventListener('click', () => {
-    if (passwordFrag == false) {
-        modal.style.display = 'none';
+
+const fixedError = document.getElementById("fixed-error");
+const roster = [...boys, ...girls].filter(student => !absent.includes(student));
+
+function validateSeatSettings(candidateFixed, candidateRules) {
+    const active = seatsAvailable.flatMap((enabled, i) => enabled ? [i] : []);
+    const studentSet = new Set(roster);
+    if (active.length !== studentSet.size)
+        return `使用可能な座席数と出席者数が一致しません（席：${active.length}、出席者：${studentSet.size}）。`;
+    const seen = new Set();
+    const remaining = {
+        boy: roster.filter(x => genderOf(x) === "boy").length,
+        girl: roster.filter(x => genderOf(x) === "girl").length
+    };
+    const needed = { boy: 0, girl: 0 };
+    for (const [key, student] of Object.entries(candidateFixed)) {
+        const index = Number(key);
+        if (!Number.isInteger(index) || index < 0 || index >= active.length)
+            return "固定先に存在しない座席があります。";
+        if (!studentSet.has(student)) return `出席していない生徒 ${student} は指定できません。`;
+        if (seen.has(student)) return `生徒 ${student} が重複して指定されています。`;
+        seen.add(student);
+        const g = genderOf(student);
+        if (candidateRules[active[index]] && candidateRules[active[index]] !== g)
+            return `座席 ${active[index] + 1} の男女指定と、生徒 ${student} の性別が矛盾しています。`;
+        remaining[g]--;
+    }
+    for (let i = 0; i < active.length; i++) {
+        if (Object.hasOwn(candidateFixed, i)) continue;
+        const g = candidateRules[active[i]];
+        if (g) needed[g]++;
+    }
+    if (needed.boy > remaining.boy || needed.girl > remaining.girl)
+        return "男女指定の座席数が、固定席を除いた出席者数を超えています。";
+    return null;
+}
+document.getElementById("fin-btn").addEventListener("click", () => {
+    fixedError.textContent = "";
+    if (!passwordFrag) {
+        modal.style.display = "none";
         return;
     }
-    let empty = 0;
-    let currentFixed = [];
+    const candidateFixed = {};
+    let skipped = 0;
     for (let i = 0; i < 42; i++) {
-        delete fixed[i];
-        const e = document.getElementById(`seat-input-${i}`);
-        if (e.style.visibility == 'hidden') {
-            empty++;
-            continue;
+        if (!seatsAvailable[i]) { skipped++; continue; }
+        const value = document.getElementById(`seat-input-${i}`).value.trim();
+        if (!value) continue;
+        if (!/^\d+$/.test(value)) {
+            fixedError.textContent = `座席 ${i + 1} に正しい生徒番号を入力してください。`;
+            return;
         }
-        if (/^\d+$/.test(e.value)) {
-            const n = Number(e.value);
-            if (n >= 0 && n <= 41) {
-                if (!currentFixed.includes(n)) {
-                    currentFixed.push(n);
-                    fixed[i - empty] = n;
-                } else {
-                    // すでに固定されている
-                }
-            } else { 
-                // 番号がおかしい
-            }
-        }
+        candidateFixed[i - skipped] = Number(value);
     }
-
-
-
-    modal.style.display = 'none';
+    const error = validateSeatSettings(candidateFixed, genderRules);
+    if (error) { fixedError.textContent = error; return; }
+    fixed = candidateFixed;
+    modal.style.display = "none";
 });
 const genderModal = document.getElementById("gender-modal");
 const genderSeats = document.getElementById("gender-seats");
 const genderError = document.getElementById("gender-error");
 const genderChoices = [null, "boy", "girl"];
 const genderButtons = [];
+let editingGenderRules = [...genderRules];
 
 function renderGenderSeats() {
     genderButtons.forEach((button, i) => {
-        const rule = genderRules[i];
+        const rule = editingGenderRules[i];
         button.disabled = !seatsAvailable[i];
         button.className = "gender-seat" + (rule ? " " + rule : "");
         button.textContent = !seatsAvailable[i] ? "×" : rule === "boy" ? "男" : rule === "girl" ? "女" : "－";
@@ -447,6 +474,7 @@ function renderGenderSeats() {
     });
 }
 function openGenderModal() {
+    editingGenderRules = [...genderRules];
     renderGenderSeats();
     genderError.textContent = "";
     genderModal.style.display = "flex";
@@ -455,7 +483,7 @@ for (let i = 0; i < 42; i++) {
     const button = document.createElement("button");
     button.type = "button";
     button.addEventListener("click", () => {
-        genderRules[i] = genderChoices[(genderChoices.indexOf(genderRules[i]) + 1) % genderChoices.length];
+        editingGenderRules[i] = genderChoices[(genderChoices.indexOf(editingGenderRules[i]) + 1) % genderChoices.length];
         renderGenderSeats();
     });
     genderButtons.push(button);
@@ -465,27 +493,14 @@ document.getElementById("gender-close").addEventListener("click", () => {
     genderModal.style.display = "none";
 });
 document.getElementById("gender-reset").addEventListener("click", () => {
-    genderRules.fill(null);
+    editingGenderRules.fill(null);
     renderGenderSeats();
     genderError.textContent = "";
 });
 document.getElementById("gender-save").addEventListener("click", () => {
-    const active = seatsAvailable.flatMap((ok, i) => ok ? [i] : []);
-    const pinned = new Set(Object.values(fixed));
-    const counts = { boy: 0, girl: 0 };
-    for (let i = 0; i < active.length; i++) {
-        const rule = genderRules[active[i]];
-        if (Object.hasOwn(fixed, i)) {
-            if (rule && genderOf(fixed[i]) !== rule) {
-                genderError.textContent = "固定席の生徒と男女指定が矛盾しています。";
-                return;
-            }
-        } else if (rule) counts[rule]++;
-    }
-    if (counts.boy > boys.filter(n => !absent.includes(n) && !pinned.has(n)).length ||
-        counts.girl > girls.filter(n => !absent.includes(n) && !pinned.has(n)).length) {
-        genderError.textContent = "指定する男女の座席数が、生徒数を超えています。";
-        return;
-    }
+    const error = validateSeatSettings(fixed, editingGenderRules);
+    if (error) { genderError.textContent = error; return; }
+    genderRules.splice(0, genderRules.length, ...editingGenderRules);
+    genderError.textContent = "";
     genderModal.style.display = "none";
 });
